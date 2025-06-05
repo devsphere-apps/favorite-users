@@ -80,15 +80,47 @@ src/
 └── utils/            # Utility/helper functions
 
 App.tsx              # Entry point
+
+
+Note: Candidate should have good knowledge on expo router as well.
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js ≥ 18**
+- **Node.js ≥ 22**
 - **Expo CLI installed globally**
 
 ```bash
 npm install -g expo-cli
 ```
+
+## 📊 Bonus (Optional)
+
+- 🚀 Implement **pagination (infinite scroll)** for the user list
+- 🎖️ Assign random **badges** to users (e.g., `"Pro"`, `"New"`) and **filter by badge**
+- 🛡️ Use proper **TypeScript types** for navigation routes (typed stack/tab params)
+- 🧪 Write **unit tests** for the Zustand store using your preferred testing library
+
+## 📝 Submission Guidelines
+
+1. 🍴 **Fork** this repository
+2. ✅ **Complete** the challenge following all listed requirements
+3. 🚀 **Push** your code to your forked GitHub repository
+4. 🔗 **Submit** the link to your forked repository for review
+
+## ✅ Evaluation Criteria
+
+- 🔸 Code readability, structure, and maintainability
+- 🔸 Correct and effective use of Zustand, React Navigation, and async data handling
+- 🔸 UX quality and completeness of all required and additional features
+- 🔸 Proper TypeScript usage and typing consistency
+- 🔸 Implementation of bonus features and extra polish
+
+## 🙌 Good Luck!
+
+If you have any questions or issues, feel free to reach out.  
+We look forward to seeing your solution!
+
+Happy Coding! 🚀
