@@ -68,15 +68,19 @@ You are required to use the following:
 
 ## 🔧 Folder Structure (Suggested)
 
+```text
 src/
-├── components/
-├── navigation/
-├── screens/
-├── store/
-├── constants/
-├── services/
-├── types/
-└── utils/
+├── components/       # Reusable UI components
+├── navigation/       # React Navigation setup
+├── screens/          # All screen components
+├── store/            # Zustand state management
+├── constants/        # App-wide constants (e.g. colors, strings)
+├── services/         # API service calls
+├── types/            # TypeScript type definitions
+└── utils/            # Utility/helper functions
+
+App.tsx              # Entry point
+```
 
 ## 🚀 Getting Started
 
