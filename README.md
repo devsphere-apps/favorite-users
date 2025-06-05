@@ -47,8 +47,12 @@ You are required to use the following:
    - Clicking a user shows more info (address, phone, company) via a modal or full screen
 
 4. **Navigation**
+
    - Implement **Tab Navigation** between “All Users” and “Favorites”
    - Use **Stack/Modal Navigation** for detail screen
+
+5. **Personal Touch**
+   - Implementing some personal touch-ups are important. If those are liked by the interviewer it can be the plus.”
 
 ---
 
