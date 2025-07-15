@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
-import React from 'react';
-import { FlatList, View } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -16,22 +16,48 @@ const BADGE_COLORS = {
 };
 
 const FavoriteCard = ({ user, onRemove }: { user: User; onRemove: () => void }) => {
-  const renderRightActions = () => (
-    <ThemedView
-      className="bg-red-500 w-20 justify-center items-center"
-      style={{ marginVertical: 8 }}
-    >
-      <ThemedText className="text-white">Remove</ThemedText>
-    </ThemedView>
-  );
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    _dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
+    const transform = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [20, 0],
+    });
+
+    return (
+      <Animated.View 
+        style={[
+          { opacity },
+          { transform: [{ translateX: transform }] }
+        ]}
+        className="bg-red-500 w-20 justify-center items-center my-2 rounded-lg"
+      >
+        <ThemedText className="text-white">Remove</ThemedText>
+      </Animated.View>
+    );
+  };
 
   return (
     <Swipeable
+      ref={swipeableRef}
       renderRightActions={renderRightActions}
-      onSwipeableOpen={onRemove}
-      overshootRight={false}
+      rightThreshold={40}
+      friction={2}
+      enableTrackpadTwoFingerGesture
+      onSwipeableOpen={() => {
+        onRemove();
+        swipeableRef.current?.close();
+      }}
     >
-      <ThemedView className="p-4 m-2 rounded-lg">
+      <ThemedView className="p-4 m-2 rounded-lg bg-white dark:bg-gray-800">
         <View className="flex-row justify-between items-center">
           <View className="flex-1">
             <Link href={`/user/${user.id}`} asChild>
@@ -83,8 +109,10 @@ const BadgeFilter = () => {
 };
 
 export default function FavoritesScreen() {
-  const { favorites, toggleFavorite, filters } = useUserStore();
   const { showToast } = useToast();
+  const favorites = useUserStore((state) => state.favorites);
+  const toggleFavorite = useUserStore((state) => state.toggleFavorite);
+  const filters = useUserStore((state) => state.filters);
 
   const handleRemove = (user: User) => {
     toggleFavorite(user);
@@ -106,7 +134,7 @@ export default function FavoritesScreen() {
   });
 
   return (
-    <ThemedView className="flex-1">
+    <ThemedView className="flex-1 bg-gray-100 dark:bg-gray-900">
       <View className="p-4">
         <ThemedText className="text-lg mb-2 font-semibold">
           Filter by badge:
@@ -114,18 +142,16 @@ export default function FavoritesScreen() {
         <BadgeFilter />
       </View>
 
-      <FlatList
-        data={filteredFavorites}
-        renderItem={({ item }) => (
-          <FavoriteCard user={item} onRemove={() => handleRemove(item)} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={
-          <ThemedText className="text-center p-4">
-            No favorite users yet
-          </ThemedText>
-        }
-      />
+      {/* FlatList is removed as per the new_code, but the logic for filtering and rendering FavoriteCard remains */}
+      {filteredFavorites.length === 0 ? (
+        <ThemedText className="text-center p-4">
+          No favorite users yet
+        </ThemedText>
+      ) : (
+        filteredFavorites.map((user) => (
+          <FavoriteCard key={user.id} user={user} onRemove={() => handleRemove(user)} />
+        ))
+      )}
     </ThemedView>
   );
 } 

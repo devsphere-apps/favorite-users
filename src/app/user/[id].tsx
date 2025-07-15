@@ -14,23 +14,23 @@ export default function UserDetailScreen() {
   const theme = Colors[colorScheme || 'light'];
   const { showToast } = useToast();
   
-  const { users, favorites, isLoading, toggleFavorite } = useUserStore();
+  const { users, favorites, toggleFavorite } = useUserStore();
   const user = users.find(u => u.id === Number(id));
+  const isFavorite = favorites.some(f => f.id === Number(id));
 
   const handleToggleFavorite = () => {
     if (user) {
-      toggleFavorite(user.id);
-      const isFavorite = !favorites.has(user.id);
+      toggleFavorite(user);
       showToast(
         isFavorite 
-          ? `Added ${user.name} to favorites` 
-          : `Removed ${user.name} from favorites`,
-        isFavorite ? 'success' : 'info'
+          ? `Removed ${user.name} from favorites` 
+          : `Added ${user.name} to favorites`,
+        isFavorite ? 'info' : 'success'
       );
     }
   };
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
       <ScrollView className="flex-1 bg-white dark:bg-gray-900">
         <UserDetailSkeleton />
@@ -56,9 +56,9 @@ export default function UserDetailScreen() {
             className="p-2"
           >
             <Ionicons
-              name={favorites.has(user.id) ? 'heart' : 'heart-outline'}
+              name={isFavorite ? 'heart' : 'heart-outline'}
               size={28}
-              color={favorites.has(user.id) ? theme.primary : theme.gray}
+              color={isFavorite ? theme.primary : theme.gray}
             />
           </TouchableOpacity>
         </View>

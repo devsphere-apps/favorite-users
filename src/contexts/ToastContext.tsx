@@ -1,41 +1,45 @@
-import { Toast } from '@/components/Toast';
-import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { Toast } from '../components/Toast';
+
+type ToastType = 'success' | 'error' | 'info';
 
 interface ToastContextType {
-  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showToast: (message: string, type?: ToastType) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{
-    message: string;
-    type: 'success' | 'error' | 'info';
-    key: number;
-  } | null>(null);
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState<ToastType>('success');
+  const [visible, setVisible] = useState(false);
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ message, type, key: Date.now() });
-  }, []);
+  const showToast = (newMessage: string, newType: ToastType = 'success') => {
+    setMessage(newMessage);
+    setType(newType);
+    setVisible(true);
+  };
+
+  const handleHide = () => {
+    setVisible(false);
+  };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toast && (
-        <Toast
-          key={toast.key}
-          message={toast.message}
-          type={toast.type}
-          onHide={() => setToast(null)}
-        />
-      )}
+      <Toast
+        message={message}
+        type={type}
+        visible={visible}
+        onHide={handleHide}
+      />
     </ToastContext.Provider>
   );
 }
 
 export function useToast() {
   const context = useContext(ToastContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;

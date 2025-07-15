@@ -8,18 +8,21 @@ interface ToastProps {
   type?: 'success' | 'error' | 'info';
   duration?: number;
   onHide?: () => void;
+  visible?: boolean;
 }
 
 export function Toast({ 
   message, 
   type = 'success', 
   duration = 2000,
-  onHide 
+  onHide,
+  visible = true
 }: ToastProps) {
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme || 'light'];
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const getBackgroundColor = () => {
     switch (type) {
@@ -35,40 +38,50 @@ export function Toast({
   };
 
   useEffect(() => {
-    // Show toast
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Hide toast after duration
-    const timer = setTimeout(() => {
+    if (visible) {
+      // Show toast
       Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: -100,
-          duration: 300,
+        Animated.spring(translateY, {
+          toValue: 0,
           useNativeDriver: true,
+          damping: 15,
+          mass: 1,
+          stiffness: 120,
         }),
         Animated.timing(opacity, {
-          toValue: 0,
-          duration: 300,
+          toValue: 1,
+          duration: 200,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        if (onHide) onHide();
-      });
-    }, duration);
+      ]).start();
 
-    return () => clearTimeout(timer);
-  }, [duration, onHide, translateY, opacity]);
+      // Hide toast after duration
+      hideTimeoutRef.current = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(translateY, {
+            toValue: -100,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          if (onHide) onHide();
+        });
+      }, duration);
+
+      return () => {
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+        }
+      };
+    }
+  }, [visible, duration, onHide, translateY, opacity]);
+
+  if (!visible) return null;
 
   return (
     <Animated.View
