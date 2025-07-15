@@ -2,6 +2,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'nativewind';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ToastProps {
   message: string;
@@ -23,6 +24,7 @@ export function Toast({
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme || 'light'];
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const insets = useSafeAreaInsets();
 
   const getBackgroundColor = () => {
     switch (type) {
@@ -91,6 +93,7 @@ export function Toast({
           transform: [{ translateY }],
           opacity,
           backgroundColor: getBackgroundColor(),
+          top: insets.top,
         },
       ]}
     >
@@ -104,7 +107,6 @@ export function Toast({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
     padding: 16,

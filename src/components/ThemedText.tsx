@@ -1,18 +1,26 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
-
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { StyleSheet, Text, type TextProps } from 'react-native';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  variant?: 
+    | 'display'    // Large titles, hero sections
+    | 'h1'         // Main headings
+    | 'h2'         // Section headings
+    | 'h3'         // Subsection headings
+    | 'body1'      // Primary body text
+    | 'body2'      // Secondary body text
+    | 'caption'    // Small text, labels
+    | 'button'     // Button text
+    | 'overline';  // All caps small text
 };
 
 export function ThemedText({
   style,
   lightColor,
   darkColor,
-  type = 'default',
+  variant = 'body1',
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
@@ -21,11 +29,7 @@ export function ThemedText({
     <Text
       style={[
         { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        styles[variant],
         style,
       ]}
       {...rest}
@@ -34,27 +38,55 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
+  display: {
+    fontSize: 36,
+    lineHeight: 44,
+    fontWeight: 'bold',
+    letterSpacing: -0.5,
   },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
+  h1: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: 'bold',
+    letterSpacing: -0.5,
+  },
+  h2: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '600',
+    letterSpacing: -0.25,
+  },
+  h3: {
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '600',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    lineHeight: 30,
+  body1: {
     fontSize: 16,
-    color: '#0a7ea4',
+    lineHeight: 24,
+    letterSpacing: 0.15,
+  },
+  body2: {
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.25,
+  },
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.4,
+  },
+  button: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
+    letterSpacing: 0.25,
+  },
+  overline: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

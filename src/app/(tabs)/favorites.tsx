@@ -1,12 +1,18 @@
+import { Card } from '@/components/Card';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
+import { useToast } from '@/contexts/ToastContext';
+import { useUserStore } from '@/store/userStore';
+import { User } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
-import React, { useRef } from 'react';
-import { Animated, View } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedView } from '../../components/ThemedView';
-import { useToast } from '../../contexts/ToastContext';
-import { useUserStore } from '../../store/userStore';
-import { Badge, User } from '../../types';
+import { MotiView } from 'moti';
+import { MotiPressable } from 'moti/interactions';
+import { useColorScheme } from 'nativewind';
+import React from 'react';
+import { View } from 'react-native';
 
 const BADGE_COLORS = {
   gold: 'bg-yellow-500',
@@ -15,95 +21,113 @@ const BADGE_COLORS = {
   new: 'bg-green-500',
 };
 
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+
 const FavoriteCard = ({ user, onRemove }: { user: User; onRemove: () => void }) => {
-  const swipeableRef = useRef<Swipeable>(null);
-
-  const renderRightActions = (
-    progress: Animated.AnimatedInterpolation<number>,
-    _dragX: Animated.AnimatedInterpolation<number>
-  ) => {
-    const opacity = progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-    });
-
-    const transform = progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: [20, 0],
-    });
-
-    return (
-      <Animated.View 
-        style={[
-          { opacity },
-          { transform: [{ translateX: transform }] }
-        ]}
-        className="bg-red-500 w-20 justify-center items-center my-2 rounded-lg"
-      >
-        <ThemedText className="text-white">Remove</ThemedText>
-      </Animated.View>
-    );
-  };
+  const { colorScheme } = useColorScheme();
+  const theme = Colors[colorScheme || 'light'];
+  
+  // Generate a unique avatar URL based on the user's name
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(user.name)}`;
 
   return (
-    <Swipeable
-      ref={swipeableRef}
-      renderRightActions={renderRightActions}
-      rightThreshold={40}
-      friction={2}
-      enableTrackpadTwoFingerGesture
-      onSwipeableOpen={() => {
-        onRemove();
-        swipeableRef.current?.close();
-      }}
-    >
-      <ThemedView className="p-4 m-2 rounded-lg bg-white dark:bg-gray-800">
-        <View className="flex-row justify-between items-center">
+    <Card variant="elevated" animated>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-row flex-1 space-x-3">
+          <Link href={`/user/${user.id}`} asChild>
+            <Image
+              source={avatarUrl}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={200}
+              className="w-12 h-12 rounded-full bg-gray-200"
+            />
+          </Link>
           <View className="flex-1">
             <Link href={`/user/${user.id}`} asChild>
-              <ThemedText className="text-lg font-bold">{user.name}</ThemedText>
+              <ThemedText variant="h3" className="mb-1">{user.name}</ThemedText>
             </Link>
-            <ThemedText className="text-sm">{user.email}</ThemedText>
+            <ThemedText variant="body2" className="text-gray-600 dark:text-gray-400">
+              {user.email}
+            </ThemedText>
             {user.badge && (
-              <View
-                className={`${
-                  BADGE_COLORS[user.badge]
-                } px-2 py-1 rounded-full self-start mt-1`}
-              >
-                <ThemedText className="text-white text-xs capitalize">
+              <View className={`${BADGE_COLORS[user.badge]} px-2 py-1 rounded-full self-start mt-2`}>
+                <ThemedText variant="caption" className="text-white capitalize">
                   {user.badge}
                 </ThemedText>
               </View>
             )}
           </View>
         </View>
-      </ThemedView>
-    </Swipeable>
+        <MotiPressable
+          onPress={onRemove}
+          animate={({ pressed }) => ({
+            scale: pressed ? 0.9 : 1,
+          })}
+          transition={{ type: 'timing', duration: 100 }}
+        >
+          <Ionicons
+            name="heart"
+            size={24}
+            color={theme.primary}
+          />
+        </MotiPressable>
+      </View>
+    </Card>
   );
 };
 
 const BadgeFilter = () => {
   const filters = useUserStore((state) => state.filters);
   const filterUsers = useUserStore((state) => state.filterUsers);
-  const badges: Badge[] = ['gold', 'silver', 'bronze', 'new'];
+  const badges = ['gold', 'silver', 'bronze', 'new'] as const;
+  const { colorScheme } = useColorScheme();
+  const theme = Colors[colorScheme || 'light'];
 
   return (
-    <View className="flex-row p-2 space-x-2">
-      {badges.map((badge) => (
-        <ThemedText
-          key={badge}
-          onPress={() =>
-            filterUsers({ badge: filters.badge === badge ? undefined : badge })
-          }
-          className={`px-3 py-1 rounded-full ${
-            filters.badge === badge
-              ? BADGE_COLORS[badge]
-              : 'bg-gray-200 dark:bg-gray-700'
-          }`}
-        >
-          {badge}
-        </ThemedText>
-      ))}
+    <View className="mb-4 pt-4">
+      <ThemedText variant="h3" className="mb-3 px-4">
+        Filter by Badge
+      </ThemedText>
+      <View className="flex-row px-4 space-x-3">
+        {badges.map((badge) => {
+          const isSelected = filters.badge === badge;
+          return (
+            <MotiPressable
+              key={badge}
+              onPress={() => filterUsers({ badge: isSelected ? undefined : badge })}
+              animate={({ pressed }) => ({
+                scale: pressed ? 0.95 : 1,
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <View
+                className={`px-4 py-2 rounded-full flex-row items-center space-x-1 ${
+                  isSelected
+                    ? BADGE_COLORS[badge]
+                    : 'bg-gray-100 dark:bg-gray-800'
+                }`}
+              >
+                {isSelected && (
+                  <Ionicons 
+                    name="checkmark-circle" 
+                    size={16} 
+                    color="white" 
+                    style={{ marginRight: 4 }} 
+                  />
+                )}
+                <ThemedText
+                  variant="button"
+                  className={`${isSelected ? 'text-white' : ''} capitalize`}
+                >
+                  {badge}
+                </ThemedText>
+              </View>
+            </MotiPressable>
+          );
+        })}
+      </View>
     </View>
   );
 };
@@ -113,6 +137,8 @@ export default function FavoritesScreen() {
   const favorites = useUserStore((state) => state.favorites);
   const toggleFavorite = useUserStore((state) => state.toggleFavorite);
   const filters = useUserStore((state) => state.filters);
+  const { colorScheme } = useColorScheme();
+  const theme = Colors[colorScheme || 'light'];
 
   const handleRemove = (user: User) => {
     toggleFavorite(user);
@@ -134,24 +160,45 @@ export default function FavoritesScreen() {
   });
 
   return (
-    <ThemedView className="flex-1 bg-gray-100 dark:bg-gray-900">
-      <View className="p-4">
-        <ThemedText className="text-lg mb-2 font-semibold">
-          Filter by badge:
-        </ThemedText>
+    <ThemedView className="flex-1 bg-gray-50 dark:bg-gray-900">
+      <MotiView
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 400 }}
+        className="flex-1"
+      >
         <BadgeFilter />
-      </View>
 
-      {/* FlatList is removed as per the new_code, but the logic for filtering and rendering FavoriteCard remains */}
-      {filteredFavorites.length === 0 ? (
-        <ThemedText className="text-center p-4">
-          No favorite users yet
-        </ThemedText>
-      ) : (
-        filteredFavorites.map((user) => (
-          <FavoriteCard key={user.id} user={user} onRemove={() => handleRemove(user)} />
-        ))
-      )}
+        <View className="px-4">
+          {filteredFavorites.length === 0 ? (
+            <Card variant="outlined" animated>
+              <View className="items-center py-8">
+                <Ionicons 
+                  name="heart-outline" 
+                  size={48} 
+                  color={theme.textSecondary} 
+                />
+                <ThemedText variant="h3" className="mt-4 mb-2">
+                  No favorites yet
+                </ThemedText>
+                <ThemedText variant="body2" className="text-center text-gray-600 dark:text-gray-400">
+                  Start adding your favorite users from the All Users tab
+                </ThemedText>
+              </View>
+            </Card>
+          ) : (
+            <View className="space-y-4">
+              {filteredFavorites.map((user) => (
+                <FavoriteCard 
+                  key={user.id} 
+                  user={user} 
+                  onRemove={() => handleRemove(user)} 
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      </MotiView>
     </ThemedView>
   );
 } 

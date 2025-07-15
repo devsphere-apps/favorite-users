@@ -1,5 +1,5 @@
 import { useColorScheme } from 'nativewind';
-import { View, type ViewProps } from 'react-native';
+import { StyleSheet, View, type ViewProps } from 'react-native';
 import { Colors } from '../constants/Colors';
 
 export type ThemedViewProps = ViewProps & {
@@ -11,12 +11,14 @@ export function ThemedView({ style, lightColor, darkColor, ...otherProps }: Them
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme || 'light'];
   
+  const backgroundColor = colorScheme === 'dark' ? darkColor : lightColor;
+  
   return (
     <View
-      style={[
-        { backgroundColor: theme.background },
+      style={StyleSheet.flatten([
+        { backgroundColor: backgroundColor || theme.background },
         style
-      ]}
+      ])}
       {...otherProps}
     />
   );
