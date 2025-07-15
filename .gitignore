@@ -50,3 +50,5 @@ android/
 web/
 
 # macos 
+package-lock.json
+yarn.lock
