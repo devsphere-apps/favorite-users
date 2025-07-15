@@ -1,4 +1,6 @@
+import { UserDetailSkeleton } from '@/components/Skeleton';
 import { Colors } from '@/constants/Colors';
+import { useToast } from '@/contexts/ToastContext';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,15 +12,29 @@ export default function UserDetailScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme || 'light'];
+  const { showToast } = useToast();
   
-  const { users, favorites, toggleFavorite } = useUserStore();
+  const { users, favorites, isLoading, toggleFavorite } = useUserStore();
   const user = users.find(u => u.id === Number(id));
 
-  if (!user) {
+  const handleToggleFavorite = () => {
+    if (user) {
+      toggleFavorite(user.id);
+      const isFavorite = !favorites.has(user.id);
+      showToast(
+        isFavorite 
+          ? `Added ${user.name} to favorites` 
+          : `Removed ${user.name} from favorites`,
+        isFavorite ? 'success' : 'info'
+      );
+    }
+  };
+
+  if (isLoading || !user) {
     return (
-      <View className="flex-1 justify-center items-center bg-white dark:bg-gray-900">
-        <Text className="text-black dark:text-white">User not found</Text>
-      </View>
+      <ScrollView className="flex-1 bg-white dark:bg-gray-900">
+        <UserDetailSkeleton />
+      </ScrollView>
     );
   }
 
@@ -36,7 +52,7 @@ export default function UserDetailScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => toggleFavorite(user.id)}
+            onPress={handleToggleFavorite}
             className="p-2"
           >
             <Ionicons

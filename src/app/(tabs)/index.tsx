@@ -1,4 +1,6 @@
+import { UserCardSkeleton } from '@/components/Skeleton';
 import { Colors } from '@/constants/Colors';
+import { useToast } from '@/contexts/ToastContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useUserStore } from '@/store/userStore';
 import { User } from '@/types/user';
@@ -13,6 +15,7 @@ export default function UsersScreen() {
   const isConnected = useNetworkStatus();
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme || 'light'];
+  const { showToast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'email'>('name');
@@ -39,6 +42,17 @@ export default function UsersScreen() {
     sortUsers(newSortBy);
   };
 
+  const handleToggleFavorite = (userId: number, userName: string) => {
+    toggleFavorite(userId);
+    const isFavorite = !favorites.has(userId);
+    showToast(
+      isFavorite 
+        ? `Added ${userName} to favorites` 
+        : `Removed ${userName} from favorites`,
+      isFavorite ? 'success' : 'info'
+    );
+  };
+
   const renderItem = ({ item }: { item: User }) => (
     <View className="flex-row items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <View className="flex-1">
@@ -53,7 +67,7 @@ export default function UsersScreen() {
         </Text>
       </View>
       <TouchableOpacity
-        onPress={() => toggleFavorite(item.id)}
+        onPress={() => handleToggleFavorite(item.id, item.name)}
         className="p-2"
       >
         <Ionicons
@@ -65,7 +79,36 @@ export default function UsersScreen() {
     </View>
   );
 
-  const filteredUsers = searchQuery ? searchUsers(searchQuery) : users;
+  const renderContent = () => {
+    if (isLoading && users.length === 0) {
+      return (
+        <>
+          {Array.from({ length: 8 }).map((_, index) => (
+            <UserCardSkeleton key={index} />
+          ))}
+        </>
+      );
+    }
+
+    const filteredUsers = searchQuery ? searchUsers(searchQuery) : users;
+
+    return (
+      <FlatList
+        data={filteredUsers}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            colors={[theme.primary]}
+            tintColor={theme.primary}
+          />
+        }
+        className="flex-1"
+      />
+    );
+  };
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-900">
@@ -98,20 +141,7 @@ export default function UsersScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={filteredUsers}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={handleRefresh}
-            colors={[theme.primary]}
-            tintColor={theme.primary}
-          />
-        }
-        className="flex-1"
-      />
+      {renderContent()}
     </View>
   );
 }
