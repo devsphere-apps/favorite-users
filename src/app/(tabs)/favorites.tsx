@@ -1,95 +1,131 @@
-import { UserCardSkeleton } from '@/components/Skeleton';
-import { Colors } from '@/constants/Colors';
-import { useToast } from '@/contexts/ToastContext';
-import { useUserStore } from '@/store/userStore';
-import { User } from '@/types/user';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useColorScheme } from 'nativewind';
-import { FlatList, Text, View } from 'react-native';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { Link } from 'expo-router';
+import React from 'react';
+import { FlatList, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedView } from '../../components/ThemedView';
+import { useToast } from '../../contexts/ToastContext';
+import { useUserStore } from '../../store/userStore';
+import { Badge, User } from '../../types';
 
-export default function FavoritesScreen() {
-  const router = useRouter();
-  const { colorScheme } = useColorScheme();
-  const theme = Colors[colorScheme || 'light'];
-  const { showToast } = useToast();
-  
-  const { users, favorites, isLoading, removeFavorite } = useUserStore();
-  const favoriteUsers = users.filter(user => favorites.has(user.id));
+const BADGE_COLORS = {
+  gold: 'bg-yellow-500',
+  silver: 'bg-gray-400',
+  bronze: 'bg-orange-700',
+  new: 'bg-green-500',
+};
 
-  const handleRemoveFavorite = (userId: number, userName: string) => {
-    removeFavorite(userId);
-    showToast(`Removed ${userName} from favorites`, 'info');
-  };
-
-  const renderRightActions = (userId: number) => (
-    <View className="bg-error-500 w-20 justify-center items-center">
-      <Ionicons name="trash-outline" size={24} color="white" />
-    </View>
-  );
-
-  const renderItem = ({ item }: { item: User }) => (
-    <Swipeable
-      renderRightActions={() => renderRightActions(item.id)}
-      onSwipeableOpen={() => handleRemoveFavorite(item.id, item.name)}
+const FavoriteCard = ({ user, onRemove }: { user: User; onRemove: () => void }) => {
+  const renderRightActions = () => (
+    <ThemedView
+      className="bg-red-500 w-20 justify-center items-center"
+      style={{ marginVertical: 8 }}
     >
-      <View className="flex-row items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <View className="flex-1">
-          <Text 
-            className="text-lg font-semibold text-black dark:text-white"
-            onPress={() => router.push(`/user/${item.id}`)}
-          >
-            {item.name}
-          </Text>
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
-            {item.email}
-          </Text>
-        </View>
-        <Ionicons
-          name="heart"
-          size={24}
-          color={theme.primary}
-        />
-      </View>
-    </Swipeable>
+      <ThemedText className="text-white">Remove</ThemedText>
+    </ThemedView>
   );
-
-  const renderContent = () => {
-    if (isLoading && users.length === 0) {
-      return (
-        <>
-          {Array.from({ length: 4 }).map((_, index) => (
-            <UserCardSkeleton key={index} />
-          ))}
-        </>
-      );
-    }
-
-    if (favoriteUsers.length === 0) {
-      return (
-        <View className="flex-1 justify-center items-center">
-          <Ionicons name="heart-outline" size={48} color={theme.gray} />
-          <Text className="mt-4 text-gray-600 dark:text-gray-400 text-center">
-            No favorite users yet
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <FlatList
-        data={favoriteUsers}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        className="flex-1"
-      />
-    );
-  };
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-900">
-      {renderContent()}
+    <Swipeable
+      renderRightActions={renderRightActions}
+      onSwipeableOpen={onRemove}
+      overshootRight={false}
+    >
+      <ThemedView className="p-4 m-2 rounded-lg">
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1">
+            <Link href={`/user/${user.id}`} asChild>
+              <ThemedText className="text-lg font-bold">{user.name}</ThemedText>
+            </Link>
+            <ThemedText className="text-sm">{user.email}</ThemedText>
+            {user.badge && (
+              <View
+                className={`${
+                  BADGE_COLORS[user.badge]
+                } px-2 py-1 rounded-full self-start mt-1`}
+              >
+                <ThemedText className="text-white text-xs capitalize">
+                  {user.badge}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        </View>
+      </ThemedView>
+    </Swipeable>
+  );
+};
+
+const BadgeFilter = () => {
+  const filters = useUserStore((state) => state.filters);
+  const filterUsers = useUserStore((state) => state.filterUsers);
+  const badges: Badge[] = ['gold', 'silver', 'bronze', 'new'];
+
+  return (
+    <View className="flex-row p-2 space-x-2">
+      {badges.map((badge) => (
+        <ThemedText
+          key={badge}
+          onPress={() =>
+            filterUsers({ badge: filters.badge === badge ? undefined : badge })
+          }
+          className={`px-3 py-1 rounded-full ${
+            filters.badge === badge
+              ? BADGE_COLORS[badge]
+              : 'bg-gray-200 dark:bg-gray-700'
+          }`}
+        >
+          {badge}
+        </ThemedText>
+      ))}
     </View>
+  );
+};
+
+export default function FavoritesScreen() {
+  const { favorites, toggleFavorite, filters } = useUserStore();
+  const { showToast } = useToast();
+
+  const handleRemove = (user: User) => {
+    toggleFavorite(user);
+    showToast('Removed from favorites', 'success');
+  };
+
+  const filteredFavorites = favorites.filter((user) => {
+    if (filters.badge && user.badge !== filters.badge) {
+      return false;
+    }
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      return (
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+      );
+    }
+    return true;
+  });
+
+  return (
+    <ThemedView className="flex-1">
+      <View className="p-4">
+        <ThemedText className="text-lg mb-2 font-semibold">
+          Filter by badge:
+        </ThemedText>
+        <BadgeFilter />
+      </View>
+
+      <FlatList
+        data={filteredFavorites}
+        renderItem={({ item }) => (
+          <FavoriteCard user={item} onRemove={() => handleRemove(item)} />
+        )}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={
+          <ThemedText className="text-center p-4">
+            No favorite users yet
+          </ThemedText>
+        }
+      />
+    </ThemedView>
   );
 } 
